@@ -31,7 +31,7 @@ export async function setupAsyncApi(app: INestApplication) {
     .addServer('ws-prod', {
       url: 'wss://v2.api.mercadomeet.com',
       protocol: 'wss',
-      description: 'Servidor de producción (Socket.IO sobre WebSocket)',
+      description: 'Production server (Socket.IO over WebSocket)',
     })
     .build();
 

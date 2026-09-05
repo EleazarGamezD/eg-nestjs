@@ -73,10 +73,10 @@
 <body>
   <div id="authOverlay" class="overlay">
     <form id="authForm" class="login">
-      <h2>Acceso al Status Monitor</h2>
-      <p>Ingresa el Admin API Key para ver las metricas del servidor.</p>
+      <h2>Status Monitor Access</h2>
+      <p>Enter the Admin API Key to view server metrics.</p>
       <label for="apiKeyInput">Admin API Key</label>
-      <input id="apiKeyInput" type="password" autocomplete="off" placeholder="Pega aqui tu API key" required />
+      <input id="apiKeyInput" type="password" autocomplete="off" placeholder="Paste your API key here" required />
       <button id="authBtn" type="submit">Entrar</button>
       <div id="authError" class="error"></div>
     </form>
@@ -105,32 +105,32 @@
     <div class="charts">
       <div class="chart">
         <div class="chart-title">CPU Usage</div>
-        <div class="chart-scale">Escala X: ultimas 30 muestras (~60s), Escala Y: porcentaje (%)</div>
+        <div class="chart-scale">X axis: last 30 samples (~60s), Y axis: percentage (%)</div>
         <div class="chart-body"><canvas id="cpuChart"></canvas></div>
       </div>
       <div class="chart">
         <div class="chart-title">Memory RSS</div>
-        <div class="chart-scale">Escala X: ultimas 30 muestras (~60s), Escala Y: megabytes (MB)</div>
+        <div class="chart-scale">X axis: last 30 samples (~60s), Y axis: megabytes (MB)</div>
         <div class="chart-body"><canvas id="memChart"></canvas></div>
       </div>
       <div class="chart">
         <div class="chart-title">Response Mean</div>
-        <div class="chart-scale">Escala X: ultimas 30 muestras (~60s), Escala Y: milisegundos (ms)</div>
+        <div class="chart-scale">X axis: last 30 samples (~60s), Y axis: milliseconds (ms)</div>
         <div class="chart-body"><canvas id="rtChart"></canvas></div>
       </div>
       <div class="chart">
         <div class="chart-title">Event Loop Lag</div>
-        <div class="chart-scale">Escala X: ultimas 30 muestras (~60s), Escala Y: milisegundos (ms)</div>
+        <div class="chart-scale">X axis: last 30 samples (~60s), Y axis: milliseconds (ms)</div>
         <div class="chart-body"><canvas id="lagChart"></canvas></div>
       </div>
       <div class="chart">
         <div class="chart-title">Network Throughput</div>
-        <div class="chart-scale">Escala X: ultimas 30 muestras (~60s), Escala Y: KB/s (In y Out)</div>
+        <div class="chart-scale">X axis: last 30 samples (~60s), Y axis: KB/s (In and Out)</div>
         <div class="chart-body"><canvas id="trafficChart"></canvas></div>
       </div>
       <div class="chart">
         <div class="chart-title">Error Ratio</div>
-        <div class="chart-scale">Escala X: ultimas 30 muestras (~60s), Escala Y: porcentaje (%) 4xx y 5xx</div>
+        <div class="chart-scale">X axis: last 30 samples (~60s), Y axis: percentage (%) 4xx y 5xx</div>
         <div class="chart-body"><canvas id="errorRateChart"></canvas></div>
       </div>
     </div>
@@ -345,7 +345,7 @@
         badge.textContent = 'ERROR';
         badge.classList.add('fail');
         stopMonitoring();
-        showAuth('API key invalido o expirado.');
+        showAuth('Invalid or expired API key.');
       }
     }
 
@@ -380,13 +380,13 @@
         startMonitoring();
       } catch (_err) {
         state.key = '';
-        authError.textContent = 'API key incorrecta. Intenta de nuevo.';
+        authError.textContent = 'Invalid API key. Try again.';
       } finally {
         authBtn.disabled = false;
       }
     });
 
-    showAuth('Ingresa una API key valida para continuar.');
+    showAuth('Enter a valid API key to continue.');
   </script>
 </body>
 </html>

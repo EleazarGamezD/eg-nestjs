@@ -33,7 +33,7 @@ import { createErrorMessage } from '../errors/error-message';
 export const ORDER_ERROR_MESSAGES = {
   ORDER_NOT_FOUND: createErrorMessage({
     en: 'Order not found',
-    es: 'No se encontró el pedido',
+    es: 'Localized Spanish message when this project explicitly uses Spanish',
     code: 'ORDER_NOT_FOUND',
   }),
 } as const;
@@ -59,7 +59,7 @@ The filter returns:
   "timestamp": "2026-09-05T12:00:00.000Z",
   "path": "/orders/123",
   "method": "GET",
-  "message": "No se encontró el pedido",
+  "message": "Localized Spanish message when this project explicitly uses Spanish",
   "originalMessage": "Order not found",
   "details": {
     "status": 404,

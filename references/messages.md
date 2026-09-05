@@ -44,7 +44,7 @@ import { createErrorMessage } from '../errors/error-message';
 export const CATALOG_ERROR_MESSAGES = {
   CATEGORY_NOT_FOUND: createErrorMessage({
     en: 'Category not found',
-    es: 'No se encontró la categoría',
+    es: 'Localized Spanish message when this project explicitly uses Spanish',
     code: 'CATEGORY_NOT_FOUND',
   }),
 } as const;
@@ -88,7 +88,7 @@ Use one registration only. The two supported language values are a type-level co
 
 `createErrorMessage` returns the descriptor. `CustomNotFoundException` retains it in the internal exception response and records `originalMessage` in English. The global filter selects the configured public language for `message`; logs and `originalMessage` remain English. The descriptor code is not automatically a top-level HTTP field in the current EG contract.
 
-For `CATEGORY_NOT_FOUND`, English mode returns `message: 'Category not found'`; Spanish mode returns `message: 'No se encontró la categoría'`. Both retain `originalMessage: 'Category not found'` and status 404. See [error-handling.md](error-handling.md) for the complete envelope and details behavior.
+For `CATEGORY_NOT_FOUND`, English mode returns `message: 'Category not found'`; Spanish mode returns the configured `es` value. Both retain `originalMessage: 'Category not found'` and status 404. See [error-handling.md](error-handling.md) for the complete envelope and details behavior.
 
 ## Validation when integrating
 
