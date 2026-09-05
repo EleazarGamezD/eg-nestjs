@@ -1,4 +1,4 @@
 interface:
   display_name: "EG NestJS"
-  short_description: "NestJS con DDD, arquitectura hexagonal y core compartido"
-  default_prompt: "Usa $eg-nestjs para implementar este módulo con las convenciones EG."
+  short_description: "NestJS with DDD, hexagonal architecture, and shared core"
+  default_prompt: "Use $eg-nestjs to implement this module with EG conventions."

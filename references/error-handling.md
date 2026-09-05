@@ -1,26 +1,30 @@
-# Manejador de errores EG dentro del backend
+# EG Error Handler Inside The Backend
 
-## Origen y alcance
+## Origin And Scope
 
-Implementación extraída de `mm-nestjs-shared` 3.5.8, biblioteca del propietario de este skill. Las plantillas del descriptor y las excepciones conservan textualmente el código inspeccionado. La plantilla del filtro conserva el manejo HTTP y los logs, dejando la integración de Sentry comentada y sin requerir un parámetro de nombre del backend. Son archivos para incorporar al backend, no instrucciones para instalar la biblioteca privada. No añadir `@mercado-meet/mm-nestjs-shared` a dependencias ni usar imports desde ese paquete para implementar este manejador.
+This implementation was extracted from `mm-nestjs-shared` 3.5.8, a private library owned by the author of this skill. The templates adapt the descriptor and filter for configurable public language: English by default and Spanish optional. The custom exceptions preserve their original implementation. The filter template preserves HTTP handling and logs, leaves Sentry integration commented out, and does not require a backend-name constructor parameter. These files are meant to be incorporated into the backend, not installed through the private library. Do not add `@mercado-meet/mm-nestjs-shared` as a dependency or import from it to implement this handler.
 
-Esta referencia especializa la sección 3 de la guía completa: conservar sus prácticas de propagación y filtros, usando el contrato EG para las nuevas excepciones personalizadas. No sustituir ni duplicar un filtro global equivalente que el backend ya tenga.
+This reference specializes section 3 of the complete guide: preserve its propagation and filter practices while using the EG contract for new custom exceptions. Do not replace or duplicate an equivalent global filter that the backend already has.
 
-## Archivos locales
+## Local Files
 
-Copiar o integrar según los archivos existentes:
+Copy or integrate according to existing files:
 
-| Plantilla del skill | Destino en el backend |
+| Skill template | Backend destination |
 | --- | --- |
 | [error-message.ts](../assets/error-handling/core/errors/error-message.ts) | `src/core/errors/error-message.ts` |
 | [custom-exception.ts](../assets/error-handling/core/exceptions/custom-exception.ts) | `src/core/exceptions/custom-exception.ts` |
 | [global-exception.filter.ts](../assets/error-handling/core/filters/global-exception.filter.ts) | `src/core/filters/global-exception.filter.ts` |
 
-Definir los descriptores de cada dominio en `src/core/messages/<domain>.messages.ts`. Resolver los imports locales con los aliases reales del backend. Las plantillas ya usan imports relativos entre sus tres archivos.
+Define each domain's descriptors in `src/core/messages/<domain>.messages.ts`. Resolve local imports with the backend's real aliases. The templates already use relative imports among the three files.
 
-El filtro original usa Express (`Request`, `Response`, `response.status().json()`). Para Fastify adaptar el acceso al request y el envío mediante su reply o `HttpAdapterHost`, preservando el contrato; no copiar las firmas Express literalmente.
+The original filter uses Express (`Request`, `Response`, `response.status().json()`). For Fastify, adapt request access and response sending through its reply object or `HttpAdapterHost`, while preserving the contract; do not copy Express signatures literally.
 
-## Descriptores y excepciones
+## Catalogs And Public Language
+
+Read [messages.md](messages.md) to implement domain catalogs and the complete local chain from scratch. `en` is required; `es` is optional. The new template uses English by default; register `new GlobalExceptionFilter('es')` only to preserve existing EG Spanish behavior. Spanish examples below correspond to that explicit mode. In English mode, `message` resolves in English and the Spanish validation translation is not applied. Logs and `originalMessage` always keep English.
+
+## Descriptors And Exceptions
 
 ```typescript
 // src/core/messages/orders.messages.ts
@@ -35,19 +39,19 @@ export const ORDER_ERROR_MESSAGES = {
 } as const;
 ```
 
-En un servicio de aplicación, importar localmente `CustomNotFoundException` y el descriptor, y lanzar `new CustomNotFoundException(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND)`.
+In an application service, import the local `CustomNotFoundException` and descriptor, then throw `new CustomNotFoundException(ORDER_ERROR_MESSAGES.ORDER_NOT_FOUND)`.
 
-- `CustomException` extiende `BadRequestException`: HTTP 400.
-- `CustomNotFoundException` extiende `NotFoundException`: HTTP 404.
-- Ambas construyen `{ status, message, originalMessage }`; el descriptor permanece en `message` hasta que el filtro lo resuelve.
-- `ErrorMessageInput` acepta strings, descriptores y arrays homogéneos de cualquiera de ellos por compatibilidad. Para nuevas excepciones personalizadas usar siempre descriptores localizados.
-- `createErrorMessage` devuelve el descriptor recibido; no registra traducciones ni valida en runtime. `code` es opcional en el tipo original, pero definirlo en todos los descriptores nuevos.
-- `resolveErrorMessage` selecciona `es` por defecto; `resolveOriginalErrorMessage` selecciona `en`. Ambos resuelven arrays recursivamente. Los strings heredados se conservan.
-- Entidades y valores del dominio puro no importan excepciones HTTP: traducir sus fallos en servicios de aplicación o en el límite de transporte.
+- `CustomException` extends `BadRequestException`: HTTP 400.
+- `CustomNotFoundException` extends `NotFoundException`: HTTP 404.
+- Both build `{ status, message, originalMessage }`; the descriptor remains in `message` until the filter resolves it.
+- `ErrorMessageInput` accepts strings, descriptors, and homogeneous arrays of either for compatibility. For new custom exceptions, always use descriptors.
+- `createErrorMessage` returns the descriptor it receives; it does not register translations or validate at runtime. `code` is optional in the original type, but define it on every new descriptor.
+- `resolveErrorMessage` selects `en` by default; it accepts explicit `es` and falls back to English if the translation is missing. `resolveOriginalErrorMessage` selects `en`. Both resolve arrays recursively. Legacy strings are preserved.
+- Pure domain entities and values do not import HTTP exceptions; translate their failures in application services or at the transport boundary.
 
-## Contrato HTTP exacto
+## HTTP Contract, With Spanish Mode Enabled
 
-El filtro devuelve:
+The filter returns:
 
 ```json
 {
@@ -64,50 +68,51 @@ El filtro devuelve:
 }
 ```
 
-`details` es condicional. En estas excepciones personalizadas conserva `status` y `originalMessage` porque el filtro solo elimina `message`, `statusCode`, `error` y `stack`. El `code` del descriptor **no se publica como campo superior** en esta implementación. No inventar ese campo ni cambiar el contrato silenciosamente.
+`details` is conditional. In these custom exceptions, it preserves `status` and `originalMessage` because the filter only removes `message`, `statusCode`, `error`, and `stack`. The descriptor `code` is not published as a top-level field in this implementation. Do not invent that field or silently change the contract.
 
-| Entrada | Comportamiento original |
+| Input | Original behavior |
 | --- | --- |
-| `HttpException` | Conserva `getStatus()`; extrae un descriptor directo, `response.message` o un string |
-| Array de mensajes | Resuelve los elementos y los une con `; `, tanto en español como en el original |
-| `property X should not exist` | Traduce a `La propiedad X no debe existir.` solo en `message` |
-| `Error` cuyo mensaje contiene `Not allowed by CORS` | HTTP 403 con mensaje CORS español/inglés |
-| Otro `Error` | HTTP 500, español genérico e inglés tomado de `exception.message` |
-| Valor desconocido | HTTP 500 con mensajes genéricos español/inglés |
-| Cualquier estado >= 500 | Omite `details` |
+| `HttpException` | Preserves `getStatus()`; extracts a direct descriptor, `response.message`, or a string |
+| Message array | Resolves elements and joins them with `; `, both for public message and original message |
+| `property X should not exist` | In Spanish mode, translates only public `message` to `La propiedad X no debe existir.` |
+| `Error` whose message contains `Not allowed by CORS` | HTTP 403 with CORS message in the selected public language and English original |
+| Other `Error` | HTTP 500, generic public message and English original from `exception.message` |
+| Unknown value | HTTP 500 with generic public/original messages |
+| Any status >= 500 | Omits `details` |
 
-El filtro no traduce automáticamente todos los mensajes de class-validator: únicamente el patrón indicado. Para nuevas validaciones que requieran español, configurar mensajes apropiados o ampliar la traducción deliberadamente con pruebas.
+The filter does not automatically translate every class-validator message. It only translates the pattern above. For new validations that require Spanish, configure proper messages or extend translation deliberately with tests.
 
-**Detalle de compatibilidad:** `originalMessage` se envía al cliente, incluso en 500, y puede contener el diagnóstico técnico original. `cleanDetails` elimina cuatro claves, no hace una limpieza recursiva ni una lista de campos autorizados. No incluir secretos o datos privados en excepciones HTTP. Si la tarea pide ocultar diagnósticos de producción, devolver un original genérico para 500 y conservar el diagnóstico en logs como un cambio explícito del contrato; las plantillas adjuntas conservan el comportamiento original.
+**Compatibility detail:** `originalMessage` is sent to the client, even for 500 responses, and may contain the original technical diagnostic. `cleanDetails` removes four keys only; it does not perform recursive cleanup or an allowlist. Do not include secrets or private data in HTTP exceptions. If a task asks to hide production diagnostics, return a generic original for 500s and keep the diagnostic in logs as an explicit contract change; the attached templates preserve the original behavior.
 
-## Registro global
+## Global Registration
 
-Registrar una sola vez, después de crear la aplicación:
+Register once, after creating the application:
 
 ```typescript
 import { GlobalExceptionFilter } from './core/filters/global-exception.filter';
 
-// Dentro de bootstrap, con app ya creada:
-app.useGlobalFilters(new GlobalExceptionFilter());
+// Inside bootstrap, after app creation:
+app.useGlobalFilters(new GlobalExceptionFilter()); // English by default
+// Existing EG Spanish projects: new GlobalExceptionFilter('es')
 ```
 
-Si el proyecto registra filtros mediante `APP_FILTER`, integrar este filtro mediante un proveedor en lugar de registrarlo también con `useGlobalFilters`. El manejador usa el logger de NestJS y no requiere un servicio externo de monitoreo.
+If the project registers filters through `APP_FILTER`, integrate this filter through a provider instead of also registering it with `useGlobalFilters`. The handler uses NestJS `Logger` and does not require an external monitoring service.
 
-Todos los fallos se registran con `Logger.error`, incluyendo método, URL, estado, contexto y mensaje original; cuando hay `Error`, se añade su stack. El contexto intenta `Controller.handler` y, si no está disponible, usa módulo inferido de la URL y plantilla de ruta. La inferencia reconoce `/api/v*/<module>`; adaptar prefijos distintos cuando corresponda.
+All failures are logged with `Logger.error`, including method, URL, status, context, and original message; when an `Error` exists, its stack is included. Context attempts `Controller.handler` and falls back to a module inferred from the URL and route template. The inference recognizes `/api/v*/<module>`; adapt different prefixes when relevant.
 
-El filtro está diseñado para HTTP. Los consumidores RPC, colas y WebSockets necesitan su propio adaptador de errores; no llamar `switchToHttp()` sobre esos contextos.
+The filter is designed for HTTP. RPC, queues, and WebSockets need their own error adapter; do not call `switchToHttp()` in those contexts.
 
-## Verificación al integrarlo
+## Integration Verification
 
-Probar el contrato observable con el runner del backend: 400/404 localizados; mensajes heredados; arrays; traducción de propiedades prohibidas; CORS 403; error desconocido 500; ausencia de `details` para 500; limpieza de campos para 4xx; contexto en logs. Verificar también el registro global con una solicitud HTTP y los imports locales mediante tipos/build.
+Test the observable contract with the backend's runner: localized 400/404, legacy messages, arrays, forbidden-property translation when Spanish mode is enabled, CORS 403, unknown 500, no `details` for 500, field cleanup for 4xx, and log context. Also verify global registration with an HTTP request and local imports through types/build.
 
-## Sentry: referencia comentada para activación bajo pedido
+## Sentry: Commented Reference For Activation On Request
 
-La plantilla contiene el import y el bloque originales de captura como comentarios, sin dependencia activa. No instalar ni activar Sentry por defecto. Si el usuario lo solicita:
+The template contains the original import and capture block as comments, with no active dependency. Do not install or activate Sentry by default. If the user requests it:
 
-1. Reutilizar la integración central del backend o configurar el SDK público `@sentry/nestjs` siguiendo la versión que utilice el proyecto, con credenciales desde configuración de entorno.
-2. Descomentar el import y el bloque `Sentry.withScope` de la plantilla. Sustituir `your-backend-name` por el nombre estable del servicio o su configuración equivalente.
-3. Mantener la captura solo para estados >= 500, la etiqueta `service` y el mecanismo mostrado. Conservar la respuesta HTTP y el logger existentes.
-4. Verificar con un doble sin red que un 500 se captura con la etiqueta correcta y un 400/404 no se captura. Revisar la integración existente para evitar reportar dos veces la misma excepción.
+1. Reuse the backend's central integration or configure the public `@sentry/nestjs` SDK according to the version used by the project, with credentials from environment configuration.
+2. Uncomment the import and `Sentry.withScope` block in the template. Replace `your-backend-name` with the stable service name or equivalent configuration.
+3. Keep capture only for statuses >= 500, preserve the `service` tag and displayed mechanism, and keep the existing HTTP response and logger.
+4. Verify with a no-network double that a 500 is captured with the correct tag and a 400/404 is not captured. Review any existing integration to avoid reporting the same exception twice.
 
-Esta integración usa el SDK público, nunca la biblioteca privada de EG.
+This integration uses the public SDK, never EG's private library.

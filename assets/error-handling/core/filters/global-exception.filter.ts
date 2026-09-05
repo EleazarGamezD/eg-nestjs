@@ -11,6 +11,7 @@ import type { Request, Response } from 'express';
 // Use the backend's central Sentry initialization before handling requests.
 // import * as Sentry from '@sentry/nestjs';
 import {
+  ErrorLanguage,
   isLocalizedErrorMessage,
   resolveErrorMessage,
   resolveOriginalErrorMessage,
@@ -18,6 +19,8 @@ import {
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
+
+  constructor(private readonly language: ErrorLanguage = 'en') {}
 
   /**
    * Normalizes an exception into the localized HTTP contract and logs it.
@@ -75,7 +78,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
     }
 
-    const message = this.normalizeMessage(resolveErrorMessage(rawMessage, 'es'), true);
+    const message = this.normalizeMessage(
+      resolveErrorMessage(rawMessage, this.language),
+      this.language === 'es',
+    );
     const originalMessage = this.normalizeMessage(resolveOriginalErrorMessage(rawMessage));
     const cleanDetails = status >= HttpStatus.INTERNAL_SERVER_ERROR
       ? undefined

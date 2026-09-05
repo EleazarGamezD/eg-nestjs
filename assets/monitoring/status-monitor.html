@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mercado Meet API - Status Monitor</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    :root { color-scheme: light; }
+    body { font-family: "Segoe UI", Arial, sans-serif; margin: 0; background: #f2f4f7; color: #172b4d; }
+    .wrap { max-width: 1140px; margin: 20px auto; padding: 0 16px; }
+    h1 { margin: 0 0 12px; font-size: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .card { background: #fff; border: 1px solid #dfe3e8; border-radius: 10px; padding: 12px; }
+    .label { font-size: 12px; opacity: 0.75; }
+    .value { font-size: 28px; font-weight: 700; margin-top: 6px; }
+    .status { display: inline-block; min-width: 140px; text-align: center; background: #35b24a; color: #fff; border-radius: 8px; padding: 10px 14px; font-weight: 700; }
+    .status.fail { background: #cc2f3c; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+    .meta { font-size: 12px; opacity: 0.7; margin-top: 10px; }
+    .codes { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .charts { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
+    .chart { background: #fff; border: 1px solid #dfe3e8; border-radius: 10px; padding: 10px; }
+    .chart-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .chart-scale { font-size: 11px; color: #475569; margin-bottom: 6px; }
+    .chart-body { position: relative; height: 190px; width: 100%; }
+    .chart canvas { width: 100% !important; height: 100% !important; display: block; }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+    .overlay.hidden { display: none; }
+    .login {
+      background: #fff;
+      width: min(450px, calc(100vw - 32px));
+      border-radius: 12px;
+      border: 1px solid #dfe3e8;
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.2);
+      padding: 18px;
+    }
+    .login h2 { margin: 0 0 8px; font-size: 20px; }
+    .login p { margin: 0 0 12px; color: #475569; font-size: 14px; }
+    .login label { display: block; font-size: 12px; margin-bottom: 4px; color: #334155; }
+    .login input {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .login button {
+      width: 100%;
+      border: 0;
+      border-radius: 8px;
+      background: #2563eb;
+      color: #fff;
+      padding: 10px 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .login button:disabled { opacity: 0.7; cursor: wait; }
+    .login .error { margin-top: 8px; min-height: 18px; color: #b91c1c; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div id="authOverlay" class="overlay">
+    <form id="authForm" class="login">
+      <h2>Acceso al Status Monitor</h2>
+      <p>Ingresa el Admin API Key para ver las metricas del servidor.</p>
+      <label for="apiKeyInput">Admin API Key</label>
+      <input id="apiKeyInput" type="password" autocomplete="off" placeholder="Pega aqui tu API key" required />
+      <button id="authBtn" type="submit">Entrar</button>
+      <div id="authError" class="error"></div>
+    </form>
+  </div>
+
+  <div class="wrap">
+    <h1>Mercado Meet API - Status Monitor</h1>
+    <div class="grid">
+      <div class="card"><div class="label">CPU Usage</div><div class="value" id="cpu">-</div></div>
+      <div class="card"><div class="label">Memory Usage</div><div class="value" id="mem">-</div></div>
+      <div class="card"><div class="label">One Minute Load Avg</div><div class="value" id="load">-</div></div>
+      <div class="card"><div class="label">Response Time</div><div class="value" id="rt">-</div></div>
+      <div class="card"><div class="label">p95 Response</div><div class="value" id="p95">-</div></div>
+      <div class="card"><div class="label">p99 Response</div><div class="value" id="p99">-</div></div>
+      <div class="card"><div class="label">Requests per Second</div><div class="value" id="rps">-</div></div>
+      <div class="card"><div class="label">Incoming Throughput</div><div class="value" id="bin">-</div></div>
+      <div class="card"><div class="label">Outgoing Throughput</div><div class="value" id="bout">-</div></div>
+      <div class="card"><div class="label">Active Requests</div><div class="value" id="active">-</div></div>
+      <div class="card"><div class="label">Event Loop Lag</div><div class="value" id="lag">-</div></div>
+      <div class="card"><div class="label">4xx Error Ratio</div><div class="value" id="e4">-</div></div>
+      <div class="card"><div class="label">5xx Error Ratio</div><div class="value" id="e5">-</div></div>
+      <div class="card"><div class="label">Heap Used / Total</div><div class="value" id="heap">-</div></div>
+      <div class="card"><div class="label">Status Codes (60s)</div><div class="value codes" id="codes">-</div></div>
+    </div>
+
+    <div class="charts">
+      <div class="chart">
+        <div class="chart-title">CPU Usage</div>
+        <div class="chart-scale">Escala X: ultimas 30 muestras (~60s), Escala Y: porcentaje (%)</div>
+        <div class="chart-body"><canvas id="cpuChart"></canvas></div>
+      </div>
+      <div class="chart">
+        <div class="chart-title">Memory RSS</div>
+        <div class="chart-scale">Escala X: ultimas 30 muestras (~60s), Escala Y: megabytes (MB)</div>
+        <div class="chart-body"><canvas id="memChart"></canvas></div>
+      </div>
+      <div class="chart">
+        <div class="chart-title">Response Mean</div>
+        <div class="chart-scale">Escala X: ultimas 30 muestras (~60s), Escala Y: milisegundos (ms)</div>
+        <div class="chart-body"><canvas id="rtChart"></canvas></div>
+      </div>
+      <div class="chart">
+        <div class="chart-title">Event Loop Lag</div>
+        <div class="chart-scale">Escala X: ultimas 30 muestras (~60s), Escala Y: milisegundos (ms)</div>
+        <div class="chart-body"><canvas id="lagChart"></canvas></div>
+      </div>
+      <div class="chart">
+        <div class="chart-title">Network Throughput</div>
+        <div class="chart-scale">Escala X: ultimas 30 muestras (~60s), Escala Y: KB/s (In y Out)</div>
+        <div class="chart-body"><canvas id="trafficChart"></canvas></div>
+      </div>
+      <div class="chart">
+        <div class="chart-title">Error Ratio</div>
+        <div class="chart-scale">Escala X: ultimas 30 muestras (~60s), Escala Y: porcentaje (%) 4xx y 5xx</div>
+        <div class="chart-body"><canvas id="errorRateChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="row">
+      <a id="healthLink" href="/health" target="_blank" rel="noreferrer">/health</a>
+      <span id="health" class="status">CHECKING</span>
+    </div>
+    <div class="meta" id="meta"></div>
+  </div>
+
+  <script>
+    const qp = new URLSearchParams(window.location.search);
+    const overlay = document.getElementById('authOverlay');
+    const authForm = document.getElementById('authForm');
+    const authBtn = document.getElementById('authBtn');
+    const authError = document.getElementById('authError');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+
+    const state = {
+      key: '',
+      timer: null,
+      sample: 0,
+    };
+
+    const labels = [];
+    const cpuSeries = [];
+    const memSeries = [];
+    const rtSeries = [];
+    const lagSeries = [];
+    const bytesInSeries = [];
+    const bytesOutSeries = [];
+    const err4Series = [];
+    const err5Series = [];
+
+    function makeLineChart(id, label, color, data) {
+      return new Chart(document.getElementById(id), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label,
+            data,
+            borderColor: color,
+            backgroundColor: color,
+            borderWidth: 2,
+            pointRadius: 0,
+            pointHoverRadius: 2,
+            tension: 0.25,
+            fill: false,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { display: false }, y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    function makeDualLineChart(id, labelA, colorA, dataA, labelB, colorB, dataB) {
+      return new Chart(document.getElementById(id), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: labelA,
+              data: dataA,
+              borderColor: colorA,
+              backgroundColor: colorA,
+              borderWidth: 2,
+              pointRadius: 0,
+              pointHoverRadius: 2,
+              tension: 0.25,
+              fill: false,
+            },
+            {
+              label: labelB,
+              data: dataB,
+              borderColor: colorB,
+              backgroundColor: colorB,
+              borderWidth: 2,
+              pointRadius: 0,
+              pointHoverRadius: 2,
+              tension: 0.25,
+              fill: false,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          plugins: { legend: { display: true, position: 'bottom' } },
+          scales: { x: { display: false }, y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    const cpuChart = makeLineChart('cpuChart', 'CPU %', '#2563eb', cpuSeries);
+    const memChart = makeLineChart('memChart', 'Memory MB', '#16a34a', memSeries);
+    const rtChart = makeLineChart('rtChart', 'Response ms', '#dc2626', rtSeries);
+    const lagChart = makeLineChart('lagChart', 'Event loop lag ms', '#7c3aed', lagSeries);
+    const trafficChart = makeDualLineChart('trafficChart', 'In KB/s', '#0ea5e9', bytesInSeries, 'Out KB/s', '#f59e0b', bytesOutSeries);
+    const errorRateChart = makeDualLineChart('errorRateChart', '4xx %', '#f97316', err4Series, '5xx %', '#ef4444', err5Series);
+
+    function getAuthHeaders() {
+      return state.key ? { 'x-admin-api-key': state.key } : {};
+    }
+
+    async function fetchStats() {
+      const response = await fetch('/api/v2/status/data', { headers: getAuthHeaders() });
+      if (!response.ok) {
+        throw new Error('Unauthorized');
+      }
+      return response.json();
+    }
+
+    async function verifyKey(inputKey) {
+      state.key = inputKey;
+      await fetchStats();
+      const cleanUrl = new URL(window.location.href);
+      cleanUrl.searchParams.delete('key');
+      window.history.replaceState({}, '', cleanUrl.pathname + cleanUrl.search);
+    }
+
+    function pushSeries(data) {
+      state.sample += 1;
+      labels.push(state.sample);
+      cpuSeries.push(data.cpuPercent);
+      memSeries.push(data.memoryMb);
+      rtSeries.push(data.responseTimeMs);
+      lagSeries.push(data.eventLoopLagMs);
+      bytesInSeries.push(data.bytesInPerSecond / 1024);
+      bytesOutSeries.push(data.bytesOutPerSecond / 1024);
+      err4Series.push(data.errorRate4xxPct);
+      err5Series.push(data.errorRate5xxPct);
+
+      if (labels.length > 30) {
+        labels.shift();
+        cpuSeries.shift();
+        memSeries.shift();
+        rtSeries.shift();
+        lagSeries.shift();
+        bytesInSeries.shift();
+        bytesOutSeries.shift();
+        err4Series.shift();
+        err5Series.shift();
+      }
+    }
+
+    function refreshCharts() {
+      cpuChart.update();
+      memChart.update();
+      rtChart.update();
+      lagChart.update();
+      trafficChart.update();
+      errorRateChart.update();
+    }
+
+    function renderStats(data) {
+      document.getElementById('cpu').textContent = data.cpuPercent.toFixed(1) + ' %';
+      document.getElementById('mem').textContent = data.memoryMb.toFixed(1) + ' MB';
+      document.getElementById('load').textContent = data.load1.toFixed(2);
+      document.getElementById('rt').textContent = data.responseTimeMs.toFixed(2) + ' ms';
+      document.getElementById('p95').textContent = data.p95ResponseMs.toFixed(2) + ' ms';
+      document.getElementById('p99').textContent = data.p99ResponseMs.toFixed(2) + ' ms';
+      document.getElementById('rps').textContent = data.requestsPerSecond.toFixed(2);
+      document.getElementById('bin').textContent = (data.bytesInPerSecond / 1024).toFixed(2) + ' KB/s';
+      document.getElementById('bout').textContent = (data.bytesOutPerSecond / 1024).toFixed(2) + ' KB/s';
+      document.getElementById('active').textContent = String(data.activeRequests);
+      document.getElementById('lag').textContent = data.eventLoopLagMs.toFixed(2) + ' ms';
+      document.getElementById('e4').textContent = data.errorRate4xxPct.toFixed(2) + ' %';
+      document.getElementById('e5').textContent = data.errorRate5xxPct.toFixed(2) + ' %';
+      document.getElementById('heap').textContent = data.memory.heapUsedMb.toFixed(1) + ' / ' + data.memory.heapTotalMb.toFixed(1) + ' MB';
+      document.getElementById('codes').textContent =
+        '2xx:' + data.statusCodes['2xx'] +
+        ' 3xx:' + data.statusCodes['3xx'] +
+        ' 4xx:' + data.statusCodes['4xx'] +
+        ' 5xx:' + data.statusCodes['5xx'];
+      document.getElementById('meta').textContent =
+        'Updated: ' + new Date(data.timestamp).toLocaleTimeString() +
+        ' | Uptime: ' + data.uptimeSeconds + 's';
+
+      pushSeries(data);
+      refreshCharts();
+    }
+
+    async function updateHealth() {
+      const response = await fetch('/health');
+      const badge = document.getElementById('health');
+      if (response.ok) {
+        badge.textContent = 'OK';
+        badge.classList.remove('fail');
+      } else {
+        badge.textContent = 'FAIL';
+        badge.classList.add('fail');
+      }
+    }
+
+    async function tick() {
+      try {
+        const raw = await fetchStats();
+        const data = raw && raw.data ? raw.data : raw;
+        renderStats(data);
+        await updateHealth();
+      } catch (_err) {
+        const badge = document.getElementById('health');
+        badge.textContent = 'ERROR';
+        badge.classList.add('fail');
+        stopMonitoring();
+        showAuth('API key invalido o expirado.');
+      }
+    }
+
+    function stopMonitoring() {
+      if (state.timer) {
+        clearInterval(state.timer);
+        state.timer = null;
+      }
+    }
+
+    function startMonitoring() {
+      overlay.classList.add('hidden');
+      stopMonitoring();
+      tick();
+      state.timer = setInterval(tick, 2000);
+    }
+
+    function showAuth(message) {
+      overlay.classList.remove('hidden');
+      authError.textContent = message || '';
+      apiKeyInput.value = '';
+      apiKeyInput.focus();
+    }
+
+    authForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      authError.textContent = '';
+      authBtn.disabled = true;
+      try {
+        const key = apiKeyInput.value.trim();
+        await verifyKey(key);
+        startMonitoring();
+      } catch (_err) {
+        state.key = '';
+        authError.textContent = 'API key incorrecta. Intenta de nuevo.';
+      } finally {
+        authBtn.disabled = false;
+      }
+    });
+
+    showAuth('Ingresa una API key valida para continuar.');
+  </script>
+</body>
+</html>

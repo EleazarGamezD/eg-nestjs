@@ -1,0 +1,70 @@
+// Reference fragments extracted from main.ts. Integrate into the existing bootstrap.
+// Required types: Request, Response, NextFunction from express.
+// Queue names and imports must come from the target backend.
+
+function getApiKeyFromRequest(req: Request): string | undefined {
+  const headerValue = req.headers['x-admin-api-key'];
+  const headerKey = Array.isArray(headerValue) ? headerValue[0] : headerValue;
+
+  const queryValue = req.query?.key;
+  const queryKey = Array.isArray(queryValue)
+    ? (typeof queryValue[0] === 'string' ? queryValue[0] : undefined)
+    : typeof queryValue === 'string'
+      ? queryValue
+      : undefined;
+
+  return headerKey ?? queryKey;
+}
+
+// Inside bootstrap:
+  // Protect /status dashboard with admin API key (x-admin-api-key header)
+  const expressInstance = app.getHttpAdapter().getInstance();
+  const statusAuthMiddleware = (req: Request, res: Response, next: NextFunction): void => {
+    const isStatusLanding = req.method === 'GET' && req.baseUrl === '/status' && req.path === '/';
+    if (isStatusLanding) {
+      next();
+      return;
+    }
+
+    const apiKey = getApiKeyFromRequest(req);
+    if (!apiKey || apiKey !== process.env.ADMIN_API_KEY) {
+      res.status(401).json({
+        statusCode: 401,
+        message: 'Unauthorized: x-admin-api-key header or ?key= query param required',
+      });
+      return;
+    }
+    next();
+  };
+  expressInstance.use('/status', statusAuthMiddleware);
+  expressInstance.use('/api/v2/status', statusAuthMiddleware);
+
+  // Bull Board — queue dashboard protected by Basic Auth (browser stores credentials for sub-requests)
+  const bullBoardAuthMiddleware = (req: Request, res: Response, next: NextFunction): void => {
+    const authHeader = req.headers.authorization as string | undefined;
+    if (authHeader?.startsWith('Basic ')) {
+      const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf-8');
+      const password = decoded.split(':').slice(1).join(':');
+      if (password === process.env.ADMIN_API_KEY) {
+        next();
+        return;
+      }
+    }
+    res.setHeader('WWW-Authenticate', 'Basic realm="Mercado Meet Admin"');
+    res.status(401).send('Unauthorized');
+  };
+  const webhookQueue = app.get(getQueueToken(WebhookConfig.QueueNameDynamic));
+  const carrierGuideQueue = app.get(
+    getQueueToken(CarrierGuideQueueConfig.QueueNameDynamic),
+  );
+  expressInstance.use(
+    '/admin/queues',
+    bullBoardAuthMiddleware,
+    setupBullBoard([webhookQueue, carrierGuideQueue]),
+  );
+
+  // Global Prefix — exclude monitoring routes that must live at root level
+  app.setGlobalPrefix('api/v2', {
+    exclude: ['health', 'health/live', 'metrics', 'status', 'admin/queues'],
+  });
+

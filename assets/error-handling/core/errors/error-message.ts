@@ -2,7 +2,7 @@ export type ErrorLanguage = 'en' | 'es';
 
 export interface LocalizedErrorMessage {
   en: string;
-  es: string;
+  es?: string;
   code?: string;
 }
 
@@ -17,23 +17,25 @@ export function isLocalizedErrorMessage(value: unknown): value is LocalizedError
     typeof value === 'object' &&
     value !== null &&
     typeof (value as LocalizedErrorMessage).en === 'string' &&
-    typeof (value as LocalizedErrorMessage).es === 'string'
+    ((value as LocalizedErrorMessage).es === undefined ||
+      typeof (value as LocalizedErrorMessage).es === 'string')
   );
 }
 
 export function resolveErrorMessage(
   message: unknown,
-  language: ErrorLanguage = 'es',
+  language: ErrorLanguage = 'en',
 ): string | string[] {
   if (Array.isArray(message)) {
     return message.map((item) => resolveErrorMessage(item, language)).flat();
   }
 
   if (isLocalizedErrorMessage(message)) {
-    return message[language];
+    return message[language] ?? message.en;
   }
 
-  return typeof message === 'string' ? message : 'Error interno del servidor';
+  return typeof message === 'string' ? message :
+    language === 'es' ? 'Error interno del servidor' : 'Internal server error';
 }
 
 export function resolveOriginalErrorMessage(message: unknown): string | string[] {
