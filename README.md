@@ -37,6 +37,10 @@ The [monitoring guide](references/monitoring.md) includes complete EG dashboard 
 
 The [enum convention](references/enums.md) requires fixed business and contract values to be centralized in enums, following project naming and folder conventions. Error message descriptors, environment configuration, Swagger prose, and monitor HTML remain in their proper forms.
 
+## Code Documentation And Contracts
+
+The [code documentation guide](references/code-documentation.md) requires meaningful JSDoc on non-trivial functions and keeps interfaces, type aliases, enums, provider maps, queue names, and event names in dedicated contract files instead of inline service logic.
+
 ## EG AsyncAPI
 
 The [AsyncAPI guide](references/asyncapi.md) includes the original setup and DTO reference, the Socket.IO event documentation format, authentication notes, enums, and payload guidance. It preserves `/sockets-docs` and the Swagger link during refactors.

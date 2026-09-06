@@ -6,6 +6,8 @@ Fixed values with business or contract meaning must be defined and reused throug
 
 Search for an existing enum before creating a new one. Do not replace enums with literal unions (`'active' | 'failed'`) or `as const` objects for new catalogs when following this convention. Do not introduce private dependencies just to reuse an enum; define it locally when the backend does not have it.
 
+For the broader rule that interfaces, type aliases, enums, provider maps, queue names, and event names belong in dedicated contract files instead of service logic, read [code-documentation.md](code-documentation.md). This file focuses on enum value conventions; the contract-file rule applies to all those declaration types.
+
 ## Project Format
 
 Reference examples: `SessionLogoutReason`, `DeviceType`, `BrowserName`, and `CarrierGuideJobState` from the EG backend.

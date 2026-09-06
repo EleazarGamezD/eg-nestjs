@@ -118,6 +118,10 @@ The table of contents in `AGENTS.md` routes to all 40 rules. Section 1.2 defines
 
 Follow repository instructions and installed dependency versions when applying examples. Inspect existing `core` responsibilities and module conventions before choosing file locations. Keep NestJS application-service patterns from the source; do not impose an additional pure-service/factory-only architecture.
 
+## Code documentation and contract files
+
+When writing or refactoring functions, interfaces, types, enums, provider maps, queue names or event names, follow [references/code-documentation.md](references/code-documentation.md). New or meaningfully changed functions that contain business, application, integration, validation, authorization, queue, WebSocket, monitoring or reusable helper logic should have JSDoc with a useful description, relevant `@param` entries, `@returns` for non-void functions, realistic `@example` when reusable or non-trivial, and `@throws` when intentional errors are part of the contract. Keep services/controllers focused on behavior: interfaces, type aliases, enums and provider maps belong in their own files under `core` or the owning feature domain, not inline inside service logic.
+
 ## EG enums: no hardcoded business strings
 
 When writing or refactoring backend code, follow [references/enums.md](references/enums.md). Fixed business/contract values (statuses, types, roles, reasons, providers, queue/job/event names) must use existing or locally defined TypeScript enums, not inline magic strings, even for a single use. Shared enums belong in `src/core/enums/<domain>/`; feature-only enums remain in their owning domain. Use English PascalCase enum names, UPPER_SNAKE_CASE members for new enums, and explicit string values that preserve the real contract. Keep localized error descriptors, environment configuration and explanatory Swagger/monitor text in their proper forms; do not mechanically turn every string into an enum. This convention also applies when adapting the full guide's examples and bundled templates.
