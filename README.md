@@ -41,6 +41,10 @@ The [enum convention](references/enums.md) requires fixed business and contract 
 
 The [code documentation guide](references/code-documentation.md) requires meaningful JSDoc on non-trivial functions and keeps interfaces, type aliases, enums, provider maps, queue names, and event names in dedicated contract files instead of inline service logic.
 
+## Environment Configuration
+
+The [environment configuration guide](references/environment-configuration.md) documents the EG convention for typed grouped config through `IConfiguration`, env enums for module factories, and `getOrThrow` for required values. It avoids raw `configService.get<string>('RAW_ENV')` calls inside service logic while allowing narrow `process.env` usage in platform-agnostic datasource/migration config files.
+
 ## EG AsyncAPI
 
 The [AsyncAPI guide](references/asyncapi.md) includes the original setup and DTO reference, the Socket.IO event documentation format, authentication notes, enums, and payload guidance. It preserves `/sockets-docs` and the Swagger link during refactors.
