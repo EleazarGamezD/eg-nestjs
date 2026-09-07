@@ -1,5 +1,11 @@
 # NestJS Best Practices
 
+## Application Scope
+
+This file is the reference guide bundled with the EG NestJS skill. Follow [SKILL.md](SKILL.md#how-to-interpret-the-rules) for rule levels, precedence, scope, and Ponytail integration before applying the numbered sections. EG topic references specialize the inherited examples. Conditional architecture and infrastructure patterns are not a checklist of components to add.
+
+When maintaining this skill repository, edit and validate the relevant skill documents or templates; the NestJS application examples do not require adding application scaffolding to this repository.
+
 **Version 1.1.0**
 NestJS Best Practices
 January 2026

@@ -21,6 +21,12 @@ and the EG DDD/hexagonal folder structure.
 
 The folder is self-contained and ready to publish as a GitHub repository. Preserve attribution to the source material when sharing it.
 
+## Rule Levels And Ponytail
+
+The skill applies to NestJS tasks and distinguishes required safeguards, EG conventions for code in scope, and conditional architecture/infrastructure patterns. See [rule interpretation](SKILL.md#how-to-interpret-the-rules) for precedence and exceptions. Existing contracts and project instructions govern scoped changes; the guide does not require a full architecture migration for a small fix.
+
+When Ponytail is installed, the skill loads one copy unless the user has disabled it. Active Ponytail takes precedence over conflicting EG guidance, including the bundled references and templates. EG complements it with NestJS best practices and preferred project organization; it does not override Ponytail to force extra files, abstractions or boilerplate. Explicit user requirements and existing contracts remain protected. Without Ponytail, EG works independently and does not require installing it.
+
 ## Local EG Error Handler
 
 Includes [the error handling guide](references/error-handling.md) and three TypeScript templates extracted from the private `mm-nestjs-shared` 3.5.8 library, so the handler can be implemented inside a backend without installing the private package. It documents the real HTTP contract, message descriptors, validation, logs, and global registration without requiring an external monitoring service. The extracted material belongs to EG's library owner; the MIT attribution of the original NestJS document does not assign a new license to these files.

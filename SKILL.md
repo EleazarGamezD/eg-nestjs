@@ -1,6 +1,6 @@
 ---
 name: eg-nestjs
-description: "Complete EG guide for creating, reviewing, and refactoring NestJS projects: preserves the NestJS Best Practices rules and examples while adapting module organization to DDD/hexagonal architecture with services, controller, module, and shared core."
+description: "Guide NestJS implementation and review using EG best practices and preferred project organization. Complement Ponytail when installed and active, deferring to it on conflicting skill guidance; work independently otherwise. Scope to NestJS work, not unrelated frontend or non-NestJS backend code."
 license: MIT
 metadata:
   author: EG
@@ -14,6 +14,8 @@ Complete guide based on NestJS Best Practices 1.1.0. It preserves the 40 rules, 
 
 ## When to Apply
 
+Use for tasks involving an existing NestJS application, confirmed by its dependencies or Nest modules/controllers, or an explicit request to create one. In mixed repositories, apply only to the NestJS application and affected contracts. Editing this skill's Markdown does not require scaffolding a NestJS application.
+
 Reference these guidelines when:
 
 - Writing new NestJS modules, controllers, or services
@@ -22,6 +24,31 @@ Reference these guidelines when:
 - Refactoring existing NestJS codebases
 - Optimizing performance or database queries
 - Building microservices architectures
+
+## How to Interpret the Rules
+
+Explicit user instructions and the target repository's instructions take precedence over this skill. When Ponytail is installed and active, its guidance takes precedence over conflicting EG guidance. This applies to all bundled references and templates, including rules worded as "must" or "required". Within EG guidance, use this section for scope, the EG references for their specific topics, section 1.2 of `AGENTS.md` for folder organization, and the remaining guide for general NestJS practices. Adapt inherited examples to EG conventions and installed versions; an example's literal strings or abbreviated paths do not override the corresponding EG rule.
+
+| Rule level | Application |
+|------------|-------------|
+| Required safeguards | Preserve behavior and public contracts unless the task changes them. Keep trust-boundary validation, authorization, safe error handling, and existing API documentation. Do not simplify these away. |
+| EG conventions | For new or meaningfully changed code in scope, follow the linked enum, typed configuration, JSDoc, contract-file, error, and API documentation conventions. These are EG project choices, not claims that other NestJS styles are invalid. Preserve their stated exceptions. |
+| Conditional patterns | Add ports, repository wrappers, events, caches, queues, microservices, lazy loading, or monitoring only for a concrete requirement or existing project contract. Their presence in the guide does not require introducing them. |
+
+Apply folder conventions to the pieces the feature needs; do not generate the complete directory tree or migrate unrelated modules. Keep tiny local implementation types local under the documentation guide's exception; business contracts still follow its extraction rule. An audit may identify broader improvements, but does not authorize implementing all of them.
+
+Priority labels describe impact when a rule applies, not a mandatory installation order. For a comprehensive review, consider all categories and mark inapplicable ones rather than inventing missing infrastructure.
+
+## Working with Ponytail
+
+When applying this skill to NestJS work, load one installed `ponytail` skill if available, unless the user has disabled it. Do not load both local and plugin copies. Honor the user's selected intensity. If Ponytail is unavailable, continue with the minimal workflow below; this skill does not require installing it.
+
+Ponytail governs the implementation approach; EG contributes NestJS best practices and the user's preferred project organization where compatible. If an EG convention would force extra files, abstractions or boilerplate that Ponytail rejects for the task, follow Ponytail rather than treating EG as an exception to it. Continue using compatible EG guidance for enums, configuration, documentation and layout. Explicit user requirements, security, validation and existing contracts remain protected; Ponytail itself does not permit simplifying those away.
+
+1. Trace the affected flow and all callers of a function before changing it; fix shared root causes once.
+2. Reuse existing code, then standard library/platform features, then installed dependencies before writing new code or adding dependencies.
+3. Make the smallest scoped change that fulfills the request and applicable EG conventions.
+4. For non-trivial behavior, add or update the smallest meaningful runnable check using the existing test setup. Check changed imports/types and affected API contracts as appropriate; do not add a test framework for a trivial edit.
 
 ## Rule Categories by Priority
 
@@ -112,7 +139,7 @@ Reference these guidelines when:
 
 ## How to Use
 
-Read [AGENTS.md](AGENTS.md), the complete authoritative guide bundled with this skill. For implementation or review, read the full sections relevant to the task, including their incorrect/correct examples; do not treat this quick reference as a replacement. For a comprehensive review, cover all 10 categories.
+Read the relevant full sections of [AGENTS.md](AGENTS.md), including their incorrect/correct examples, and the EG references linked below for the task. Apply them under the scope and precedence above; do not treat this quick reference as a replacement or load unrelated templates.
 
 The table of contents in `AGENTS.md` routes to all 40 rules. Section 1.2 defines EG folder organization and takes precedence over abbreviated example paths elsewhere. All other numbered sections retain the original text and examples. Preserve their guidance on dependency injection, exceptions, security, performance, testing, databases, APIs, messaging and operations.
 
