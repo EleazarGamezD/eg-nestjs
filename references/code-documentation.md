@@ -38,7 +38,7 @@ Do not add noisy JSDoc to trivial NestJS lifecycle methods, one-line private del
 
 Do not define interfaces, type aliases, enums, injection tokens, event names, queue names, or provider maps inline inside services, controllers, repositories, processors, or gateways. Put contracts in their own files and folders so services contain behavior instead of local type/catalog declarations.
 
-Use the existing project structure first. For new EG modules, follow these defaults:
+Follow [architecture selection](../AGENTS.md#12-respect-the-selected-architecture). The paths below are examples: map shared paths to the existing shared root, and use feature-level enums/, interfaces/ and types/ when there is no domain layer. Do not create a domain layer for contract extraction.
 
 - Shared enums: `src/core/enums/<domain>/<name>.enum.ts`.
 - Shared interfaces: `src/core/interfaces/<domain>/<name>.interface.ts` or the project's existing `interface/` naming when that is already established.
@@ -47,7 +47,7 @@ Use the existing project structure first. For new EG modules, follow these defau
 - Feature-only enums: `src/modules/<feature>/domain/enums/<name>.enum.ts`.
 - Feature-only interfaces: `src/modules/<feature>/domain/interfaces/<name>.interface.ts`.
 - Feature-only types: `src/modules/<feature>/domain/types/<name>.type.ts`.
-- Infrastructure/provider contracts: inside the owning adapter/infrastructure folder when they are not shared by the domain.
+- Infrastructure/provider contracts: in responsibility subfolders of the owning adapter/infrastructure layer when present, or of the owning feature/layer otherwise.
 
 For example, `SocialLoginSource`, `AuthProvider`, and `FIREBASE_PROVIDER_MAP` belong in `src/core/enums/social-login/social-login.enum.ts` or equivalent shared auth/social-login contract files, not inside `auth-o2auth.service.ts`.
 

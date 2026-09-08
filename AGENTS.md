@@ -28,7 +28,7 @@ Comprehensive best practices and architecture guide for NestJS applications, des
 
 1. [Architecture](#1-architecture) — **CRITICAL**
    - 1.1 [Avoid Circular Dependencies](#11-avoid-circular-dependencies)
-   - 1.2 [Organize by Domain Modules (DDD / Hexagonal EG)](#12-organize-by-domain-modules-ddd--hexagonal-eg)
+   - 1.2 [Respect the Selected Architecture](#12-respect-the-selected-architecture)
    - 1.3 [Use Proper Module Sharing Patterns](#13-use-proper-module-sharing-patterns)
    - 1.4 [Single Responsibility for Services](#14-single-responsibility-for-services)
    - 1.5 [Use Event-Driven Architecture for Decoupling](#15-use-event-driven-architecture-for-decoupling)
@@ -161,112 +161,77 @@ Reference: [NestJS Circular Dependency](https://docs.nestjs.com/fundamentals/cir
 
 ---
 
-### 1.2 Organize by Domain Modules (DDD / Hexagonal EG)
+### 1.2 Respect the Selected Architecture
 
-**Impact: CRITICAL** — Explicit business boundaries and consistent folder organization
+**Impact: CRITICAL** — Architecture-aware placement and consistent responsibility folders
 
-Organize the application by business domain using DDD (Domain-Driven Design) and hexagonal architecture. Keep each domain self-contained under `src/modules/<domain>/`; retain existing audience groupings such as `client/` or `admin/` when applicable. Do not organize the whole application as global collections of controllers and services.
+EG's preference for responsibility folders does not require DDD or hexagonal architecture. Select the architecture before choosing file locations.
 
-**Incorrect (global technical layers or loose feature files):**
+**Selection and detection:**
+
+1. Follow the architecture explicitly requested by the user, under the precedence in SKILL.md. When it differs from the project, adapt only the requested scope; do not silently migrate the whole application.
+2. Otherwise inspect repository instructions, architecture documentation, representative neighboring modules, imports, provider wiring and persistence boundaries. Preserve the architecture actually used in the affected area, including intentional hybrids. Folder names alone are insufficient evidence.
+3. If documentation and implementation disagree, describe the discrepancy and follow the established affected flow for a local change. Ask only when ambiguity materially prevents the requested work.
+4. For a new project without an architecture choice or usable evidence, use a minimal feature-first NestJS layout with responsibility subfolders and state that assumption. Do not invent domain models, ports or adapters to justify an architecture label.
+
+**Distinguish architecture from folder organization:**
+
+| Architecture / organization | Evidence and placement |
+|-----------------------------|------------------------|
+| DDD | Business language, bounded contexts, entities, value objects and invariants guide boundaries. Place domain behavior, application coordination and persistence according to existing layers. DDD does not itself require hexagonal ports. |
+| Hexagonal | Application/domain logic depends on ports; inbound and outbound adapters interact through those boundaries, wired at composition. Preserve dependency direction and local adapter layout. A rich DDD model is not required merely because ports exist. |
+| MVC / layered | Preserve controllers, models, services and views (when rendered views exist), whether organized globally by layer or within features. Technical-layer folders are valid here. A JSON API does not need a views folder. Do not add domain/ports/infrastructure layers for a straightforward MVC task. |
+| Screaming Architecture / feature-first | Top-level names expose business capabilities such as orders, payments or users. Group files by responsibility inside each capability. This organization can coexist with DDD, hexagonal or MVC; it does not prove any of them by itself. |
+| Other or hybrid | Preserve documented boundaries and actual dependency direction in the affected module. Do not force the entire repository into one label. |
+
+**EG responsibility folders, within the selected architecture:**
+
+Do not leave new or meaningfully reorganized implementation files loose at src/, a feature root or an architectural layer root. Place them in their responsibility folder even when there is only one file: services in services/, controllers in controller/ or controllers/, feature modules in module/ or modules/, and DTOs, repositories, entities/models, mappers, guards, gateways and contracts in their respective folders. Choose the containing feature/layer/adapter from the architecture first.
+
+Preserve established naming, language and singular/plural conventions, such as servicios/, services/, controller/, guard/, interface/ or pipe/; do not create competing synonyms. A file named services.ts is still a service implementation and belongs in the services folder. Create only needed directories, never empty architecture scaffolding.
+
+Composition entrypoints such as main.ts and app.module.ts may stay at the application root. Configuration/tooling entrypoints, intentional barrel exports and colocated tests follow their existing conventions; the responsibility rule concerns implementation placement, not moving every root file.
+
+**Illustrative paths — select the matching organization, not all of them:**
 
 ```text
-src/
-├── controllers/              # Controllers from unrelated domains
-├── services/                 # Services from unrelated domains
-└── orders/
-    ├── orders.controller.ts  # Missing dedicated controller folder
-    ├── orders.service.ts     # Missing dedicated services folder
-    └── orders.module.ts      # Missing dedicated module folder
+# Feature-first / Screaming, without imposing DDD or ports
+src/modules/orders/controller/orders.controller.ts
+src/modules/orders/services/create-order.service.ts
+src/modules/orders/module/orders.module.ts
+src/modules/orders/dto/create-order.dto.ts
+
+# DDD with application/domain/infrastructure layers
+src/modules/orders/application/services/create-order.service.ts
+src/modules/orders/domain/entities/order.entity.ts
+src/modules/orders/domain/services/order-pricing.service.ts
+src/modules/orders/infrastructure/persistence/repositories/order.repository.ts
+src/modules/orders/presentation/controllers/orders.controller.ts
+src/modules/orders/module/orders.module.ts
+
+# Hexagonal with inbound/outbound adapters
+src/modules/orders/application/services/create-order.service.ts
+src/modules/orders/application/ports/order-repository.port.ts
+src/modules/orders/adapters/inbound/http/controllers/orders.controller.ts
+src/modules/orders/adapters/outbound/persistence/repositories/sql-order.repository.ts
+src/modules/orders/module/orders.module.ts
+
+# MVC organized by technical layer
+src/controllers/orders.controller.ts
+src/services/orders.service.ts
+src/models/order.model.ts
+src/modules/orders.module.ts
 ```
 
-**Correct (EG domain organization):**
+These paths illustrate alternatives, not mandatory trees. Retain audience groupings such as client/ or admin/ where present. Constructor injection and @Injectable() remain valid in NestJS application services. Where a pure domain exists, keep it independent of HTTP, NestJS and ORM decorators; map its failures at the application/transport boundary. Keep domain entities distinct from ORM models when that separation is part of the selected architecture.
 
-```text
-src/
-├── app.module.ts
-├── main.ts
-├── modules/
-│   └── orders/
-│       ├── controller/
-│       │   └── orders.controller.ts
-│       ├── module/
-│       │   └── orders.module.ts
-│       ├── services/
-│       │   └── create-order.service.ts
-│       ├── domain/
-│       │   ├── entities/
-│       │   ├── value-objects/
-│       │   ├── services/
-│       │   └── errors/
-│       ├── ports/
-│       │   └── order-repository.port.ts
-│       ├── infrastructure/
-│       │   ├── persistence/
-│       │   │   ├── repositories/
-│       │   │   ├── entities/
-│       │   │   └── mappers/
-│       │   └── adapters/
-│       ├── dto/
-│       └── mappers/
-└── core/
-    ├── adapters/
-    ├── config/
-    ├── constants/
-    ├── domain/
-    ├── dto/
-    ├── enums/
-    ├── exceptions/
-    ├── guard/
-    ├── helpers/
-    ├── interface/
-    ├── messages/
-    ├── middlewares/
-    ├── permissions/
-    ├── pipe/
-    ├── services/
-    ├── utils/
-    ├── validation/
-    └── validator/
-```
+**Shared responsibilities and bundled examples:**
 
-Create only the folders needed by the feature. Keep `app.module.ts` and `main.ts` at the composition root.
+Reuse the project's existing shared location (core/, common/, shared/ or equivalent). For a new EG project, default to src/core/ with only needed responsibility subfolders. Shared code must not depend on feature modules; feature-specific behavior stays in its owner. Preserve distinctions such as validation/ versus validator/ after inspecting their responsibilities. Use shared domain folders only when a shared pure domain exists. Register shared providers through explicit module imports/exports.
 
-- `services/`: application services and use cases. Preserve constructor injection and NestJS service practices from this guide; `@Injectable()` remains valid here.
-- `controller/`: inbound HTTP controllers, delegating business operations to services.
-- `module/`: NestJS module files, provider registration, imports, exports and port-to-adapter wiring.
-- `domain/`: business entities, value objects, invariants and domain errors; domain services go in `domain/services/`. Keep this inner model independent of HTTP, NestJS and ORM decorators.
-- `ports/`: contracts for persistence and external capabilities, implemented by adapters. Use explicit injection tokens as explained in section 2.6.
-- `infrastructure/persistence/`: ORM entities, repository implementations and persistence mappers.
-- `infrastructure/adapters/`: implementations that call external providers.
-- `dto/` and `mappers/`: feature-specific transport inputs/outputs and mappings.
+Paths in other EG references and source templates are examples to map into the selected architecture, including src/core/ and src/modules/<feature>/domain/. They do not require creating those roots or a domain layer. Keep links to bundled source files intact; adapt their destination paths and imports when implementing them in an application.
 
-Dependencies point inward: controllers invoke application services; services coordinate domain behavior through ports; infrastructure implements those ports; modules compose the concrete implementations. Keep ORM models distinct from pure domain entities. The existing examples in other sections demonstrate their named practice; place those files in the corresponding EG folders rather than copying their abbreviated paths literally.
-
-**Shared core, following the existing EG project:**
-
-Put cross-domain configuration, adapters, constants, shared DTOs, enums, exceptions, guards, helpers, interfaces, localized messages, middleware, permissions, pipes, shared services, utilities and validators in `src/core/`. Preserve the existing names `guard/`, `interface/`, `pipe/`, `validation/` and `validator/`; inspect their responsibilities before adding equivalents. Use `core/domain/` only for genuinely shared pure domain primitives. Keep feature-specific business behavior in its own domain. `core` must not depend on feature modules.
-
-Preserve additional project-specific core folders (such as `territories/`, `postman/` or documentation) where they exist, without requiring them in every new project. Register shared providers through an explicit composition module and reuse exports/imports as described in section 1.3.
-
-**Module wiring (illustrative fragment):**
-
-```typescript
-// src/modules/orders/module/orders.module.ts
-@Module({
-  imports: [TypeOrmModule.forFeature([OrderPersistenceEntity])],
-  controllers: [OrdersController],
-  providers: [
-    OrdersService,
-    { provide: ORDER_REPOSITORY, useClass: SqlOrderRepository },
-  ],
-  exports: [OrdersService], // Export only the public API other modules need
-})
-export class OrdersModule {}
-```
-
-NestJS application services can retain the HTTP exception behavior described in section 3.2; do not move those transport exceptions into pure domain entities or value objects. Map pure domain failures at the application/transport boundary. This folder adaptation does not remove or replace the remaining practices of the guide.
-
-For existing modules, reorganize within the requested scope and update affected imports and provider registration. Do not change public routes or behavior merely to move files.
+For existing code, apply grouping to new files and scoped structural changes. A small behavior fix does not authorize moving unrelated files or normalizing the whole module. When moving files, update imports, provider registration, exports and affected test/configuration paths, preserving routes, behavior, Swagger and AsyncAPI metadata.
 
 Reference: [NestJS Modules](https://docs.nestjs.com/modules)
 

@@ -6,7 +6,7 @@ Personal skill based on the complete **NestJS Best Practices 1.1.0** guide by Ka
 
 [AGENTS.md](AGENTS.md) preserves the 40 rules with their explanations and correct/incorrect examples across architecture, dependency injection, errors, security, performance, testing, databases, API design, microservices, and operations.
 
-The only replaced section is **1.2: module organization**, along with its table-of-contents link. It is adapted to DDD/hexagonal architecture with `services/`, `controller/`, `module/`, domain, ports, infrastructure, and the shared EG `core`. The other 39 numbered sections are preserved textually, including their examples.
+The only replaced section is **1.2: module organization**, along with its table-of-contents link. It follows the architecture requested by the user or detected in the project: DDD, hexagonal, MVC, Screaming Architecture, or a hybrid. EG keeps implementation files in responsibility folders within that architecture without requiring domain layers or ports. The other 39 numbered sections are preserved textually, including their examples.
 
 [SKILL.md](SKILL.md) is the entry point, with the practice index and additional EG conventions. It does not require installing the original skill. `agents/openai.yaml` contains UI metadata.
 
@@ -16,7 +16,7 @@ Copy this full folder as `.agents/skills/eg-nestjs/` in a project that uses that
 
 ```text
 Use $eg-nestjs to implement this module following the complete guide
-and the EG DDD/hexagonal folder structure.
+and the existing or requested architecture, grouping files by responsibility.
 ```
 
 The folder is self-contained and ready to publish as a GitHub repository. Preserve attribution to the source material when sharing it.

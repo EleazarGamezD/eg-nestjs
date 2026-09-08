@@ -1,6 +1,6 @@
 ---
 name: eg-nestjs
-description: "Guide NestJS implementation and review using EG best practices and preferred project organization. Complement Ponytail when installed and active, deferring to it on conflicting skill guidance; work independently otherwise. Scope to NestJS work, not unrelated frontend or non-NestJS backend code."
+description: "Guide NestJS implementation and review using EG best practices and architecture-aware project organization. Complement Ponytail when installed and active, deferring to it on conflicting skill guidance; work independently otherwise. Scope to NestJS work, not unrelated frontend or non-NestJS backend code."
 license: MIT
 metadata:
   author: EG
@@ -10,7 +10,7 @@ metadata:
 
 # EG NestJS
 
-Complete guide based on NestJS Best Practices 1.1.0. It preserves the 40 rules, explanations, and examples across 10 categories. The only replaced section from the original document is 1.2, folder organization, adapted to DDD/hexagonal architecture and EG conventions.
+Complete guide based on NestJS Best Practices 1.1.0. It preserves the 40 rules, explanations, and examples across 10 categories. The only replaced section from the original document is 1.2, folder organization, adapted to the requested or detected architecture and EG responsibility-folder conventions.
 
 ## When to Apply
 
@@ -38,6 +38,12 @@ Explicit user instructions and the target repository's instructions take precede
 Apply folder conventions to the pieces the feature needs; do not generate the complete directory tree or migrate unrelated modules. Keep tiny local implementation types local under the documentation guide's exception; business contracts still follow its extraction rule. An audit may identify broader improvements, but does not authorize implementing all of them.
 
 Priority labels describe impact when a rule applies, not a mandatory installation order. For a comprehensive review, consider all categories and mark inapplicable ones rather than inventing missing infrastructure.
+
+## Architecture selection and file placement
+
+Before adding or moving files, follow [AGENTS.md section 1.2](AGENTS.md#12-respect-the-selected-architecture): use the user's requested architecture, otherwise detect it from documentation and code dependencies in the affected project. Support DDD, hexagonal, MVC, Screaming Architecture and hybrids without imposing DDD/hexagonal by default. For a new project without evidence or a preference, state a minimal feature-first assumption.
+
+Within that architecture, group implementation files by responsibility even for a single service/controller; preserve local folder names and keep composition entrypoints at the root. All reference/template destination paths are adaptable examples: domain/ is conditional, and core/ maps to the project's shared location. Read section 1.2 for examples and scoped migration rules.
 
 ## Working with Ponytail
 
@@ -70,7 +76,7 @@ Ponytail governs the implementation approach; EG contributes NestJS best practic
 ### 1. Architecture (CRITICAL)
 
 - `arch-avoid-circular-deps` - Avoid circular module dependencies
-- `arch-feature-modules` - Organize by domain with EG DDD/hexagonal folders: services/, controller/, module/ and shared core/
+- `arch-feature-modules` - Follow the requested or detected architecture and group files by responsibility
 - `arch-module-sharing` - Proper module exports/imports, avoid duplicate providers
 - `arch-single-responsibility` - Focused services over "god services"
 - `arch-use-repository-pattern` - Abstract database logic for testability
